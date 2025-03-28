@@ -4,8 +4,33 @@ import { Input } from "@/components/ui/input"
 import { Search, MapPin, Calendar, Award, Clock, Heart } from "lucide-react"
 import FeatureCard from "@/components/feature-card"
 import OpportunityCard from "@/components/opportunity-card"
+import supabase from "@/lib/supabase"
 
-export default function Home() {
+// Fetch featured opportunities from Supabase
+async function getFeaturedOpportunities() {
+  console.log("Fetching featured opportunities from Supabase...")
+
+  // Fetch the 3 most recent opportunities
+  // You could add a "featured" boolean column to your opportunities table
+  // and filter by that instead if you want to specifically mark certain opportunities as featured
+  const { data, error } = await supabase
+    .from("opportunities")
+    .select("*, organizations(name)")
+    .order("created_at", { ascending: false })
+    .limit(3)
+
+  if (error) {
+    console.error("Error fetching featured opportunities:", error)
+    return []
+  }
+
+  console.log("Featured opportunities fetched:", data)
+  return data || []
+}
+
+export default async function Home() {
+  const opportunities = await getFeaturedOpportunities()
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -134,32 +159,37 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mt-12">
-            <OpportunityCard
-              title="Beach Cleanup Initiative"
-              organization="Ocean Guardians"
-              category="Environment"
-              location="Miami Beach, FL"
-              date="Jun 15, 2024"
-              image="/placeholder.svg?height=300&width=400"
-            />
-            <OpportunityCard
-              title="After-School Tutoring"
-              organization="Education For All"
-              category="Education"
-              location="Chicago, IL"
-              date="Ongoing"
-              image="/placeholder.svg?height=300&width=400"
-            />
-            <OpportunityCard
-              title="Food Bank Assistant"
-              organization="Community Pantry"
-              category="Food Security"
-              location="Austin, TX"
-              date="Weekends"
-              image="/placeholder.svg?height=300&width=400"
-            />
-          </div>
+
+          {opportunities.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-lg font-medium">No opportunities available yet</h3>
+              <p className="text-muted-foreground mt-2">Check back soon for new volunteer opportunities</p>
+              <div className="mt-6">
+                <Link href="/organizations/register">
+                  <Button>Register Your Organization</Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mt-12">
+              {opportunities.map((opportunity) => (
+                <OpportunityCard
+                  key={opportunity.id}
+                  title={opportunity.title}
+                  organization={opportunity.organizations?.name || "Organization"}
+                  category={opportunity.category}
+                  location={opportunity.location}
+                  date={new Date(opportunity.date).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                  image="/placeholder.svg?height=300&width=400"
+                />
+              ))}
+            </div>
+          )}
+
           <div className="flex justify-center mt-10">
             <Link href="/opportunities">
               <Button size="lg">View All Opportunities</Button>
