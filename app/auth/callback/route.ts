@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       if (!existingUser) {
         const { error: insertError } = await supabase.from("users").insert({
           id: data.user.id,
-          email: data.user.email,
+          email: data.user.email || "",
           name: data.user.user_metadata.name || data.user.email?.split("@")[0] || "User",
           role: data.user.user_metadata.role || "volunteer",
           created_at: new Date().toISOString(),
@@ -34,7 +34,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Check if there's a redirect parameter
+  const redirectTo = requestUrl.searchParams.get("redirectTo") || requestUrl.origin
+
   // URL to redirect to after sign in process completes
-  return NextResponse.redirect(requestUrl.origin)
+  return NextResponse.redirect(redirectTo)
 }
 

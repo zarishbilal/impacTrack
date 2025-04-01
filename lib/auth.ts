@@ -9,6 +9,31 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+// Helper function to create a user record in the public.users table
+async function createUserRecord(userId: string, email: string, name: string, role: "volunteer" | "organization") {
+  try {
+    // Check if user already exists in the users table
+    const { data: existingUser } = await supabase.from("users").select("id").eq("id", userId).single()
+
+    // If user doesn't exist, create a new record
+    if (!existingUser) {
+      const { error } = await supabase.from("users").insert({
+        id: userId,
+        email: email,
+        name: name,
+        role: role,
+        created_at: new Date().toISOString(),
+      })
+
+      if (error) {
+        console.error("Error creating user record:", error)
+      }
+    }
+  } catch (error) {
+    console.error("Error in createUserRecord:", error)
+  }
+}
+
 export const signUp = async (email: string, password: string, name: string, role: "volunteer" | "organization") => {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -27,19 +52,7 @@ export const signUp = async (email: string, password: string, name: string, role
 
   // After successful signup, create a record in the users table
   if (data.user) {
-    const { error: insertError } = await supabase.from("users").insert({
-      id: data.user.id,
-      email: data.user.email,
-      name: name,
-      role: role,
-      created_at: new Date().toISOString(),
-    })
-
-    if (insertError) {
-      console.error("Error creating user record:", insertError)
-      // We don't throw here to avoid blocking signup if this fails
-      // The user is already created in Auth, which is the primary requirement
-    }
+    await createUserRecord(data.user.id, email, name, role)
   }
 
   return data
@@ -53,6 +66,21 @@ export const signIn = async (email: string, password: string) => {
 
   if (error) {
     throw error
+  }
+
+  // Ensure user exists in the users table
+  if (data.user) {
+    const { data: userData } = await supabase.from("users").select("*").eq("id", data.user.id).single()
+
+    if (!userData) {
+      // If user doesn't exist in users table, create a record
+      await createUserRecord(
+        data.user.id,
+        data.user.email || "",
+        data.user.user_metadata.name || data.user.email?.split("@")[0] || "User",
+        data.user.user_metadata.role || "volunteer",
+      )
+    }
   }
 
   return data

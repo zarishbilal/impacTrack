@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -27,8 +27,12 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Get the redirect URL from query parameters
+  const redirectTo = searchParams.get("redirect") || "/"
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -44,7 +48,7 @@ export default function LoginPage() {
 
     try {
       await signIn(values.email, values.password)
-      router.push("/")
+      router.push(redirectTo)
     } catch (error: any) {
       console.error("Login error:", error)
       setError(error.message || "Failed to sign in. Please check your credentials.")
