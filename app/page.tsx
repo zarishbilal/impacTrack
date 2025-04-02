@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input"
 import { Search, MapPin, Calendar, Award, Clock, Heart } from "lucide-react"
 import FeatureCard from "@/components/feature-card"
 import OpportunityCard from "@/components/opportunity-card"
-import RegisterOrganizationButton from "@/components/register-organization-button"
 import supabase from "@/lib/supabase"
 
 // Fetch featured opportunities from Supabase
@@ -12,6 +11,8 @@ async function getFeaturedOpportunities() {
   console.log("Fetching featured opportunities from Supabase...")
 
   // Fetch the 3 most recent opportunities
+  // You could add a "featured" boolean column to your opportunities table
+  // and filter by that instead if you want to specifically mark certain opportunities as featured
   const { data, error } = await supabase
     .from("opportunities")
     .select("*, organizations(name)")
@@ -52,11 +53,15 @@ export default async function Home() {
                     Find Opportunities
                   </Button>
                 </Link>
-                <RegisterOrganizationButton
-                  size="lg"
-                  variant="outline"
-                  className="text-white border-white bg-primary/30 hover:bg-white/10"
-                />
+                <Link href="/organizations/register">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="text-white border-white bg-primary/30 hover:bg-white/10"
+                  >
+                    Register Organization
+                  </Button>
+                </Link>
               </div>
             </div>
             <div className="flex justify-center lg:justify-end">
@@ -160,7 +165,9 @@ export default async function Home() {
               <h3 className="text-lg font-medium">No opportunities available yet</h3>
               <p className="text-muted-foreground mt-2">Check back soon for new volunteer opportunities</p>
               <div className="mt-6">
-                <RegisterOrganizationButton />
+                <Link href="/organizations/register">
+                  <Button>Register Your Organization</Button>
+                </Link>
               </div>
             </div>
           ) : (
