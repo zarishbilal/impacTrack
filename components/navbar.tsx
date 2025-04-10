@@ -63,19 +63,24 @@ export default function Navbar() {
             </SheetTrigger>
             <SheetContent side="right">
               <nav className="flex flex-col gap-4 mt-8">
-                <Link href="/opportunities" onClick={() => setIsOpen(false)}>
+                {/* <Link href="/opportunities" onClick={() => setIsOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start">
                     Find Opportunities
                   </Button>
-                </Link>
+                </Link> */}
                 <Link href="/organizations" onClick={() => setIsOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start">
                     Organizations
                   </Button>
                 </Link>
-                <Link href="/about" onClick={() => setIsOpen(false)}>
+                {/* <Link href="/about" onClick={() => setIsOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start">
                     About
+                  </Button>
+                </Link> */}
+                <Link href="/external-organizations" onClick={() => setIsOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start">
+                    External Organizations
                   </Button>
                 </Link>
 
@@ -91,7 +96,7 @@ export default function Navbar() {
                       <Link href="/organizations/dashboard" onClick={() => setIsOpen(false)}>
                         <Button variant="ghost" className="w-full justify-start">
                           <Building className="mr-2 h-4 w-4" />
-                          Organization Dashboard
+                          My Organization
                         </Button>
                       </Link>
                     )}
@@ -127,7 +132,7 @@ export default function Navbar() {
             <NavigationMenu className="ml-auto">
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger>Find Opportunities</NavigationMenuTrigger>
+                  {/* <NavigationMenuTrigger>Find Opportunities</NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-2">
                       <li className="row-span-3">
@@ -153,18 +158,35 @@ export default function Navbar() {
                         Check out our featured and urgent volunteer opportunities.
                       </ListItem>
                     </ul>
-                  </NavigationMenuContent>
+                  </NavigationMenuContent> */}
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <Link href="/organizations" legacyBehavior passHref>
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>Organizations</NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
-                <NavigationMenuItem>
+                {/* <NavigationMenuItem>
                   <Link href="/about" legacyBehavior passHref>
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>About</NavigationMenuLink>
                   </Link>
+                </NavigationMenuItem> */}
+                <NavigationMenuItem>
+                  <Link href="/external-organizations" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      External Organizations
+                    </NavigationMenuLink>
+                  </Link>
                 </NavigationMenuItem>
+                {isAuthenticated && userRole === "organization" && (
+                  <NavigationMenuItem>
+                    <Link href="/organizations/dashboard" legacyBehavior passHref>
+                      <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                        <Building className="mr-2 h-4 w-4" />
+                        My Organization
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                )}
               </NavigationMenuList>
             </NavigationMenu>
             <div className="ml-4 flex items-center gap-2">
@@ -201,7 +223,7 @@ export default function Navbar() {
                       <DropdownMenuItem asChild>
                         <Link href="/organizations/dashboard">
                           <Building className="mr-2 h-4 w-4" />
-                          <span>Organization Dashboard</span>
+                          <span>My Organization</span>
                         </Link>
                       </DropdownMenuItem>
                     )}

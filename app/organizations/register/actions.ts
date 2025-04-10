@@ -23,18 +23,6 @@ export async function createOrganization(formData: z.infer<typeof organizationSc
     const cookieStore = cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
-    // Get the current user's session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session) {
-      return {
-        success: false,
-        error: "You must be logged in to register an organization.",
-      }
-    }
-
     // Prepare the data for insertion
     const organizationData = {
       id: uuidv4(), // Generate a UUID for the organization
@@ -45,27 +33,23 @@ export async function createOrganization(formData: z.infer<typeof organizationSc
       phone: validatedData.phone || null,
       address: validatedData.address,
       created_at: new Date().toISOString(),
-      // Add the user_id to link the organization to the current user
-      user_id: session.user.id,
     }
 
     // Insert the data into Supabase
     const { error } = await supabase.from("organizations").insert(organizationData)
 
     if (error) {
-      console.error("Error inserting organization:", error)
       return {
         success: false,
         error: error.message,
       }
     }
 
+    // Only return success without any additional information
     return {
       success: true,
-      organizationId: organizationData.id,
     }
   } catch (error) {
-    console.error("Error creating organization:", error)
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -79,4 +63,3 @@ export async function createOrganization(formData: z.infer<typeof organizationSc
     }
   }
 }
-

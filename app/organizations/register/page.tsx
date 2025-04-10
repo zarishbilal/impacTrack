@@ -47,6 +47,7 @@ export default function RegisterOrganizationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
   const [errorMessage, setErrorMessage] = useState("")
+  const [debugInfo, setDebugInfo] = useState<string | null>(null)
 
   const form = useForm<z.infer<typeof organizationSchema>>({
     resolver: zodResolver(organizationSchema),
@@ -63,13 +64,18 @@ export default function RegisterOrganizationPage() {
   async function onSubmit(values: z.infer<typeof organizationSchema>) {
     setIsSubmitting(true)
     setSubmitStatus("idle")
+    setDebugInfo(null)
 
     try {
+      console.log("Submitting form with values:", values)
       const result = await createOrganization(values)
+      console.log("Server action result:", result)
 
-      if (result.error) {
+      // setDebugInfo(JSON.stringify(result, null, 2))
+
+      if (!result.success) {
         setSubmitStatus("error")
-        setErrorMessage(result.error)
+        setErrorMessage(result.error || "Unknown error occurred")
       } else {
         setSubmitStatus("success")
         // Reset form after successful submission
@@ -80,9 +86,10 @@ export default function RegisterOrganizationPage() {
         }, 3000)
       }
     } catch (error) {
+      console.error("Error submitting form:", error)
       setSubmitStatus("error")
       setErrorMessage("An unexpected error occurred. Please try again.")
-      console.error("Error submitting form:", error)
+      setDebugInfo(error instanceof Error ? error.message : String(error))
     } finally {
       setIsSubmitting(false)
     }
@@ -114,6 +121,15 @@ export default function RegisterOrganizationPage() {
             <AlertTitle className="text-red-800">Registration Failed</AlertTitle>
             <AlertDescription className="text-red-700">
               {errorMessage || "There was an error registering your organization. Please try again."}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {debugInfo && (
+          <Alert className="mb-6 bg-blue-50 border-blue-200">
+            <AlertTitle className="text-blue-800">Debug Information</AlertTitle>
+            <AlertDescription className="text-blue-700">
+              <pre className="whitespace-pre-wrap text-xs">{debugInfo}</pre>
             </AlertDescription>
           </Alert>
         )}

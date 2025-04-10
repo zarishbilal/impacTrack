@@ -10,22 +10,58 @@ import supabase from "@/lib/supabase"
 async function getFeaturedOpportunities() {
   console.log("Fetching featured opportunities from Supabase...")
 
-  // Fetch the 3 most recent opportunities
-  // You could add a "featured" boolean column to your opportunities table
-  // and filter by that instead if you want to specifically mark certain opportunities as featured
-  const { data, error } = await supabase
-    .from("opportunities")
-    .select("*, organizations(name)")
-    .order("created_at", { ascending: false })
-    .limit(3)
+  try {
+    // Fetch opportunities without trying to join with organizations
+    const { data: opportunities, error } = await supabase
+      .from("opportunities")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(3)
 
-  if (error) {
-    console.error("Error fetching featured opportunities:", error)
+    if (error) {
+      console.error("Error fetching featured opportunities:", error)
+      return []
+    }
+
+    // If we have opportunities, fetch the organization details separately
+    if (opportunities && opportunities.length > 0) {
+      // Get unique organization IDs
+      const organizationIds = [...new Set(opportunities.map((opp) => opp.organization_id).filter(Boolean))]
+
+      // If we have organization IDs, fetch their details
+      if (organizationIds.length > 0) {
+        const { data: organizations, error: orgError } = await supabase
+          .from("organizations")
+          .select("id, name")
+          .in("id", organizationIds)
+
+        if (orgError) {
+          console.error("Error fetching organizations:", orgError)
+        } else if (organizations) {
+          // Create a map of organization id to name for quick lookup
+          const orgMap = organizations.reduce<Record<string, string>>((map, org) => {
+            map[org.id] = org.name
+            return map
+          }, {})
+
+          // Add organization name to each opportunity
+          opportunities.forEach((opp) => {
+            if (opp.organization_id && orgMap[opp.organization_id]) {
+              opp.organization_name = orgMap[opp.organization_id]
+            } else {
+              opp.organization_name = "Organization"
+            }
+          })
+        }
+      }
+    }
+
+    console.log("Featured opportunities fetched:", opportunities)
+    return opportunities || []
+  } catch (error) {
+    console.error("Error in getFeaturedOpportunities:", error)
     return []
   }
-
-  console.log("Featured opportunities fetched:", data)
-  return data || []
 }
 
 export default async function Home() {
@@ -176,7 +212,7 @@ export default async function Home() {
                 <OpportunityCard
                   key={opportunity.id}
                   title={opportunity.title}
-                  organization={opportunity.organizations?.name || "Organization"}
+                  organization={opportunity.organization_name || "Organization"}
                   category={opportunity.category}
                   location={opportunity.location}
                   date={new Date(opportunity.date).toLocaleDateString("en-US", {
