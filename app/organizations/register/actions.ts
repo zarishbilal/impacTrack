@@ -23,10 +23,40 @@ export async function createOrganization(formData: z.infer<typeof organizationSc
     const cookieStore = cookies()
     const supabase = createServerActionClient({ cookies: () => cookieStore })
 
+    // Normalize the organization name for duplicate check
+    const normalizedOrgName = validatedData.name.trim().toLowerCase()
+
+    // Check if organization with the same normalized name already exists
+    const { data: existingOrgs, error: fetchError } = await supabase
+      .from("organizations")
+      .select("id, name")
+      .limit(1)
+
+    if (fetchError) {
+      return {
+        success: false,
+        error: "Failed to check existing organizations.",
+      }
+    }
+
+    // Check for duplicate by normalizing names in JS (case-insensitive, trimmed)
+    if (
+      existingOrgs &&
+      existingOrgs.some(
+        (org: { name: string }) =>
+          org.name.trim().toLowerCase() === normalizedOrgName
+      )
+    ) {
+      return {
+        success: false,
+        error: "An organization with this name already exists.",
+      }
+    }
+
     // Prepare the data for insertion
     const organizationData = {
       id: uuidv4(), // Generate a UUID for the organization
-      name: validatedData.name,
+      name: validatedData.name.trim(),
       email: validatedData.email,
       website: validatedData.website || null,
       description: validatedData.description,
